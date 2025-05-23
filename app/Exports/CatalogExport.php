@@ -56,7 +56,7 @@ class CatalogExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoS
         return [
             'DCI',
             'DOSAGE',
-            'FORME GALu00c9NIQUE',
+            'FORME GALENIQUE',
             'SOUS SOUS CATEGORIE',
             'SOUS CATEGORIE',
             'CATEGORIE',
@@ -76,7 +76,7 @@ class CatalogExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoS
         $subSubCategory = '';
         $subCategory = '';
         $mainCategory = '';
-        
+
         if ($category) {
             if ($category->parent && $category->parent->parent) {
                 // C'est une sous-sous-catu00e9gorie

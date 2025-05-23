@@ -5,20 +5,21 @@ namespace App\Livewire\Catalog\Aisles;
 use App\Models\Aisle;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Http\Livewire\Traits\WithTenantContext;
+use Illuminate\Validation\Rule;
 
 class Edit extends Component
 {
+    use WithTenantContext;
     public $aisle_id;
     public $code;
     public $name;
     public $category_id;
     public $is_global;
-    public $tenant_id;
-    
+
     public $categories = [];
-    
+
     protected function rules()
     {
         return [
@@ -33,34 +34,36 @@ class Edit extends Component
             'is_global' => 'boolean',
         ];
     }
-    
+
     public function mount($id)
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.edit'), 403);
-        
+
+        // Set le tenant
+        $this->setTenant(app('tenant'));
+
         // Charger l'emplacement
         $aisle = Aisle::findOrFail($id);
-        
+
         // Vérifier si l'emplacement est global et si l'utilisateur a le droit de le modifier
         if ($aisle->is_global && !Auth::user()->can('catalog.manage')) {
             abort(403, 'Vous n\'avez pas les permissions nécessaires pour modifier un emplacement global.');
         }
-        
+
         // Pas de restriction par tenant car les données sont traitées globalement
         // La restriction se fait seulement par les permissions et pour les emplacements globaux
-        
+
         $this->aisle_id = $aisle->id;
         $this->code = $aisle->code;
         $this->name = $aisle->name;
         $this->category_id = $aisle->category_id;
         $this->is_global = $aisle->is_global;
-        $this->tenant_id = $aisle->tenant_id;
-        
+
         // Charger les catégories pour le formulaire
         $this->loadCategories();
     }
-    
+
     public function loadCategories()
     {
         // Récupérer toutes les catégories
@@ -69,7 +72,7 @@ class Edit extends Component
             ->get()
             ->toArray();
     }
-    
+
     public function updatedIsGlobal()
     {
         // Si l'utilisateur veut transformer l'emplacement en global, vérifier qu'il a les permissions nécessaires
@@ -81,28 +84,27 @@ class Edit extends Component
             ]);
         }
     }
-    
+
     public function update()
     {
         $this->validate();
-        
+
         try {
             $aisle = Aisle::findOrFail($this->aisle_id);
-            
+
             $aisle->update([
                 'code' => $this->code,
                 'name' => $this->name,
                 'category_id' => $this->category_id,
-                'tenant_id' => $this->is_global ? null : Auth::user()->tenant_id,
                 'is_global' => $this->is_global,
             ]);
-            
+
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Emplacement mis à jour avec succès!'
             ]);
-            
-            return redirect()->route('tenant.catalog.aisles.index', ['tenant' => request()->route('tenant')]);
+
+            return redirect()->route('tenant.catalog.aisles.index', ['tenant' => $this->getCurrentTenant()]);
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',
@@ -110,7 +112,7 @@ class Edit extends Component
             ]);
         }
     }
-    
+
     public function render()
     {
         return view('livewire.catalog.aisles.edit');

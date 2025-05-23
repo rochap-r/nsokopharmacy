@@ -3,15 +3,16 @@
 namespace App\Livewire\Settings;
 
 use App\Models\User;
-use App\Http\Livewire\Traits\WithToast;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Livewire\Traits\WithToast;
+use Illuminate\Support\Facades\Session;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class Profile extends Component
 {
-    use WithToast;
+    use WithToast, WithTenantContext;
 
     public string $name = '';
 

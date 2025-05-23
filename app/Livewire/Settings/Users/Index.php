@@ -8,10 +8,11 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Livewire\Traits\WithToast;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class Index extends Component
 {
-    use WithPagination, WithToast;
+    use WithPagination, WithToast, WithTenantContext;
 
     protected $paginationTheme = 'tailwind';
 
@@ -20,22 +21,14 @@ class Index extends Component
     public $userIdToDelete = null;
     public $userName = '';
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public $tenantParam;
-    public $tenant_id;  // Propriété publique pour stocker l'ID du tenant
 
     protected $layout = 'components.layouts.app';
 
     /**
      * Execute au chargement de la page pour afficher les messages flash sous forme de toast
      */
-    public function mount($tenant = null)
+    public function mount()
     {
-        // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
-
         // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
         $tenant = app('tenant');
 
@@ -43,8 +36,8 @@ class Index extends Component
             return redirect()->route('identification');
         }
 
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
+        // Utiliser le trait WithTenantContext pour stocker l'ID du tenant
+        $this->setTenant($tenant);
 
         // Vérification des messages flash pour les afficher en toast
         if (session()->has('success')) {
@@ -90,23 +83,17 @@ class Index extends Component
 
     public function navigateToCreateUser()
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.users.create', ['tenant' => $tenant->domain], navigate: true);
+        $this->redirectRoute('tenant.settings.users.create', ['tenant' => $this->getCurrentTenant()], navigate: true);
     }
 
     public function navigateToEditUser($userId)
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.users.edit', ['tenant' => $tenant->domain, 'id' => $userId], navigate: true);
+        $this->redirectRoute('tenant.settings.users.edit', ['id' => $userId, 'tenant' => $this->getCurrentTenant()], navigate: true);
     }
 
     public function navigateToViewUser($userId)
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.users.show', ['tenant' => $tenant->domain, 'id' => $userId], navigate: true);
+        $this->redirectRoute('tenant.settings.users.show', ['id' => $userId, 'tenant' => $this->getCurrentTenant()], navigate: true);
     }
 
     public function confirmDelete($userId)
@@ -177,8 +164,8 @@ class Index extends Component
     public function render()
     {
         try {
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
+            // Utiliser la méthode du trait pour récupérer le tenant
+            $tenant = $this->getCurrentTenant();
 
             $users = User::with('roles')
                 ->where('tenant_id', $tenant->id) // Filtrer par tenant_id

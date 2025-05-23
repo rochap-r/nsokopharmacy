@@ -10,7 +10,7 @@
     </header>
 
     @if (session()->has('success'))
-        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" 
+        <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 transform scale-95"
             x-transition:enter-end="opacity-100 transform scale-100"
@@ -49,11 +49,11 @@
                                 <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input wire:model="name" type="text" id="name" 
-                            class="pl-11 w-full bg-gray-50 border-0 text-gray-900 rounded-lg py-3 ring-1 ring-inset ring-gray-300 
-                            placeholder:text-gray-400 outline-none 
-                            focus:ring-2 focus:ring-inset focus:ring-primary-500 
-                            dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder-gray-500 
+                        <input wire:model="name" type="text" id="name"
+                            class="pl-11 w-full bg-gray-50 border-0 text-gray-900 rounded-lg py-3 ring-1 ring-inset ring-gray-300
+                            placeholder:text-gray-400 outline-none
+                            focus:ring-2 focus:ring-inset focus:ring-primary-500
+                            dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder-gray-500
                             dark:focus:ring-primary-500 transition-all duration-200"
                             placeholder="Entrez le nom complet">
                     </div>
@@ -78,11 +78,11 @@
                                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                             </svg>
                         </div>
-                        <input wire:model="email" type="email" id="email" 
-                            class="pl-11 w-full bg-gray-50 border-0 text-gray-900 rounded-lg py-3 ring-1 ring-inset ring-gray-300 
-                            placeholder:text-gray-400 outline-none 
-                            focus:ring-2 focus:ring-inset focus:ring-primary-500 
-                            dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder-gray-500 
+                        <input wire:model="email" type="email" id="email"
+                            class="pl-11 w-full bg-gray-50 border-0 text-gray-900 rounded-lg py-3 ring-1 ring-inset ring-gray-300
+                            placeholder:text-gray-400 outline-none
+                            focus:ring-2 focus:ring-inset focus:ring-primary-500
+                            dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder-gray-500
                             dark:focus:ring-primary-500 transition-all duration-200"
                             placeholder="exemple@email.com">
                     </div>
@@ -112,16 +112,16 @@
                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                             </svg>
                         </div>
-                        <input wire:model="password" :type="showPassword ? 'text' : 'password'" id="password" 
-                            class="pl-11 pr-11 w-full bg-gray-50 border-0 text-gray-900 rounded-lg py-3 ring-1 ring-inset ring-gray-300 
-                            placeholder:text-gray-400 outline-none 
-                            focus:ring-2 focus:ring-inset focus:ring-primary-500 
-                            dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder-gray-500 
+                        <input wire:model="password" :type="showPassword ? 'text' : 'password'" id="password"
+                            class="pl-11 pr-11 w-full bg-gray-50 border-0 text-gray-900 rounded-lg py-3 ring-1 ring-inset ring-gray-300
+                            placeholder:text-gray-400 outline-none
+                            focus:ring-2 focus:ring-inset focus:ring-primary-500
+                            dark:bg-gray-800 dark:text-white dark:ring-gray-600 dark:placeholder-gray-500
                             dark:focus:ring-primary-500 transition-all duration-200"
                             placeholder="Entrez le mot de passe">
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <button type="button" @click="showPassword = !showPassword" 
-                                class="text-gray-400 hover:text-primary-500 focus:outline-none focus:text-primary-500 transition-colors duration-200 
+                            <button type="button" @click="showPassword = !showPassword"
+                                class="text-gray-400 hover:text-primary-500 focus:outline-none focus:text-primary-500 transition-colors duration-200
                                 dark:text-gray-500 dark:hover:text-primary-400">
                                 <svg x-show="!showPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" />
@@ -153,14 +153,14 @@
                 <div class="bg-gray-50 p-6 rounded-xl shadow-inner dark:bg-gray-800/50">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach ($roles as $role)
-                            <div class="relative flex items-start bg-white p-4 rounded-xl border border-gray-200 
-                                hover:border-primary-300 hover:shadow-md transition-all duration-200 
+                            <div class="relative flex items-start bg-white p-4 rounded-xl border border-gray-200
+                                hover:border-primary-300 hover:shadow-md transition-all duration-200
                                 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-primary-500
                                 @if($selectedRole == $role->id) ring-2 ring-primary-500 dark:ring-primary-400 @endif">
                                 <div class="flex items-center h-5">
-                                    <input wire:model="selectedRole" id="role-{{ $role->id }}" name="selectedRole" value="{{ $role->id }}" type="radio" 
-                                        class="h-5 w-5 text-primary-600 border-gray-300 focus:ring-primary-500 
-                                        dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-primary-500 
+                                    <input wire:model="selectedRole" id="role-{{ $role->id }}" name="selectedRole" value="{{ $role->id }}" type="radio"
+                                        class="h-5 w-5 text-primary-600 border-gray-300 focus:ring-primary-500
+                                        dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-primary-500
                                         transition-colors duration-200 cursor-pointer">
                                 </div>
                                 <div class="ml-3 text-sm">
@@ -185,19 +185,19 @@
                 @enderror
             </div>
             <div class="pt-5 flex justify-end space-x-4">
-                <a href="{{ tenant_route('tenant.settings.users.index') }}" wire:navigate 
-                    class="inline-flex justify-center py-3 px-5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 
-                    bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
-                    dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800 
+                <a href="{{ tenant_route('tenant.settings.users.index') }}" wire:navigate
+                    class="inline-flex justify-center py-3 px-5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700
+                    bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
+                    dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800
                     transition-colors duration-200 ease-in-out">
                     <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Annuler
                 </a>
-                <button type="submit" 
-                    class="inline-flex justify-center py-3 px-5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
-                    bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 
+                <button type="submit"
+                    class="inline-flex justify-center py-3 px-5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white
+                    bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
                     dark:focus:ring-offset-gray-800 transition-colors duration-200 ease-in-out">
                     <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

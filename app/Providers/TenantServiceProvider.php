@@ -13,9 +13,8 @@ class TenantServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Enregistrer un singleton pour le tenant courant
         $this->app->singleton('tenant', function () {
-            return null; // Sera défini par le middleware
+            return null;
         });
     }
 

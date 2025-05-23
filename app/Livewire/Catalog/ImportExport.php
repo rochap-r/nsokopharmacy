@@ -9,11 +9,12 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Http\Livewire\Traits\WithTenantContext;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ImportExport extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithTenantContext;
 
     public $file;
     public $importMode = false;
@@ -23,24 +24,36 @@ class ImportExport extends Component
     public $importErrors = [];
     public $importStats = [];
     public $processing = false;
-    
+
     // Filtres pour l'export
     public $category_id = null;
     public $search = '';
     public $active = true;
-    
+
     // Liste des catégories pour le filtre
     public $categories = [];
+
+
 
     protected $rules = [
         'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
     ];
 
-    public function mount()
+    public function mount($tenant = null)
     {
+        // Récupérer le tenant depuis le middleware
+        $tenant = app('tenant');
+
+        if (!$tenant) {
+            return redirect()->route('identification');
+        }
+
+        // Utiliser la méthode du trait pour stocker le tenant
+        $this->setTenant($tenant);
+
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.view'), 403);
-        
+
         // Charger les catégories pour le filtre d'export
         $this->loadCategories();
     }
@@ -56,8 +69,14 @@ class ImportExport extends Component
 
     public function render()
     {
+        // Charger les catégories parentes pour le filtre d'export
+        $parentCategories = Category::whereNull('parent_id')
+            ->with(['children', 'children.children'])
+            ->get();
+
         return view('livewire.catalog.import-export', [
             'productCount' => Product::count(),
+            'parentCategories' => $parentCategories,
         ]);
     }
 
@@ -65,7 +84,7 @@ class ImportExport extends Component
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.import'), 403);
-        
+
         $this->resetValidation();
         $this->reset('file', 'importSuccess', 'importErrors', 'importStats');
         $this->importMode = true;
@@ -76,7 +95,7 @@ class ImportExport extends Component
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.export'), 403);
-        
+
         $this->exportMode = true;
         $this->importMode = false;
     }
@@ -84,18 +103,20 @@ class ImportExport extends Component
     public function cancel()
     {
         $this->reset('file', 'importMode', 'exportMode', 'importSuccess', 'exportSuccess');
+
+        return redirect()->route('tenant.catalog.index', ['tenant' => $this->getCurrentTenant()]);
     }
 
     public function import()
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.import'), 403);
-        
+
         $this->validate();
         $this->processing = true;
 
         try {
-            $import = new CatalogImport(Auth::user()->tenant_id);
+            $import = new CatalogImport($this->tenant_id);
             Excel::import($import, $this->file);
 
             $this->importSuccess = true;
@@ -125,7 +146,7 @@ class ImportExport extends Component
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.export'), 403);
-        
+
         $this->processing = true;
 
         try {
@@ -142,7 +163,7 @@ class ImportExport extends Component
             ]);
 
             $this->processing = false;
-            
+
             return Excel::download(new CatalogExport($filters), 'catalogue-' . now()->format('Y-m-d') . '.xlsx');
         } catch (\Exception $e) {
             $this->dispatch('notify', [

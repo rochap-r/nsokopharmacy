@@ -72,7 +72,7 @@ Route::prefix('tenant/{tenant}')->middleware(['tenant'])->group(function () {
         Route::get('/settings/users/{id}/show', App\Livewire\Settings\Users\Show::class)
             ->name('tenant.settings.users.show')
             ->middleware('can:manage-users');
-            
+
         // Routes pour le module Catalogue
         Route::get('/catalog', App\Livewire\Catalog\Index::class)
             ->name('tenant.catalog.index')
@@ -80,7 +80,7 @@ Route::prefix('tenant/{tenant}')->middleware(['tenant'])->group(function () {
         Route::get('/catalog/import-export', App\Livewire\Catalog\ImportExport::class)
             ->name('tenant.catalog.import-export')
             ->middleware('can:catalog.view');
-            
+
         // Routes pour la gestion des emplacements/rayons
         Route::get('/catalog/aisles', App\Livewire\Catalog\Aisles\Index::class)
             ->name('tenant.catalog.aisles.index')
@@ -91,11 +91,8 @@ Route::prefix('tenant/{tenant}')->middleware(['tenant'])->group(function () {
         Route::get('/catalog/aisles/{id}/edit', App\Livewire\Catalog\Aisles\Edit::class)
             ->name('tenant.catalog.aisles.edit')
             ->middleware('can:catalog.edit');
-            
-        // Routes pour la gestion des produits
-        Route::get('/catalog/products', App\Livewire\Catalog\Products\Index::class)
-            ->name('tenant.catalog.products.index')
-            ->middleware('can:catalog.view');
+
+
         Route::get('/catalog/products/create', App\Livewire\Catalog\Products\Create::class)
             ->name('tenant.catalog.products.create')
             ->middleware('can:catalog.create');
@@ -105,7 +102,7 @@ Route::prefix('tenant/{tenant}')->middleware(['tenant'])->group(function () {
         Route::get('/catalog/products/{id}', App\Livewire\Catalog\Products\Show::class)
             ->name('tenant.catalog.products.show')
             ->middleware('can:catalog.view');
-            
+
         // Routes pour la gestion des catégories
         Route::get('/catalog/categories', App\Livewire\Catalog\Categories\Index::class)
             ->name('tenant.catalog.categories.index')

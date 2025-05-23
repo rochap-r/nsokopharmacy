@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class Password extends Component
 {
+    use WithTenantContext;
     public string $current_password = '';
 
     public string $password = '';

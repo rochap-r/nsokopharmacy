@@ -9,10 +9,11 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Livewire\Traits\WithToast;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class Index extends Component
 {
-    use WithPagination, WithToast;
+    use WithPagination, WithToast, WithTenantContext;
 
     protected $paginationTheme = 'tailwind';
 
@@ -20,27 +21,20 @@ class Index extends Component
     public $search = '';
     public $category_id = null;
     public $active = true;
-    
+
     // Liste des catégories pour le filtre
     public $categories = [];
-    
-    // Pour gérer le contexte tenant
-    public $tenantParam;
-    public $tenant_id;
-    
+
     protected $queryString = [
         'search' => ['except' => ''],
         'category_id' => ['except' => ''],
         'active' => ['except' => true],
     ];
-    
-    public function mount($tenant = null)
+
+    public function mount()
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.view'), 403);
-        
-        // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
 
         // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
         $tenant = app('tenant');
@@ -49,12 +43,12 @@ class Index extends Component
             return redirect()->route('identification');
         }
 
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
-        
+        // Utiliser la méthode du trait pour stocker le tenant
+        $this->setTenant($tenant);
+
         // Charger les catégories pour le filtre
         $this->loadCategories();
-        
+
         // Vérification des messages flash pour les afficher en toast
         if (session()->has('success')) {
             $this->success(session('success'), 6000);
@@ -66,7 +60,7 @@ class Index extends Component
             session()->forget('error'); // Reset pour éviter des affichages multiples
         }
     }
-    
+
     public function loadCategories()
     {
         // Récupérer toutes les catégories principales (sans parent)
@@ -75,7 +69,7 @@ class Index extends Component
             ->get()
             ->toArray();
     }
-    
+
     public function resetSearch()
     {
         $this->reset('search');
@@ -85,26 +79,26 @@ class Index extends Component
     {
         $this->resetPage();
     }
-    
+
     public function updatingCategoryId()
     {
         $this->resetPage();
     }
-    
+
     public function updatingActive()
     {
         $this->resetPage();
     }
-    
+
     public function render()
     {
         try {
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-            
+            // Utiliser la méthode du trait pour récupérer le tenant
+            $tenant = $this->getCurrentTenant();
+
             // Construction de la requête de produits - traitement global des données
             $query = Product::query();
-            
+
             // Filtrage par recherche
             if (!empty($this->search)) {
                 $query->where(function($q) {
@@ -113,20 +107,20 @@ class Index extends Component
                       ->orWhere('forme_galenique', 'like', "%{$this->search}%");
                 });
             }
-            
+
             // Filtrage par catégorie
             if (!empty($this->category_id)) {
                 $query->where('category_id', $this->category_id);
             }
-            
+
             // Filtrage par statut
             if ($this->active !== null) {
                 $query->where('active', $this->active);
             }
-            
+
             // Pagination des résultats avec chargement des relations
             $products = $query->with('category')->paginate(10);
-            
+
             // Rendu de la vue avec passage des données
             return view('livewire.catalog.index', [
                 'products' => $products,
@@ -136,7 +130,7 @@ class Index extends Component
         } catch (\Exception $e) {
             Log::error('Erreur dans Catalog\Index::render: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
-            
+
             $this->error('Erreur lors du chargement des produits: ' . $e->getMessage());
             return view('livewire.catalog.index', [
                 'products' => collect(),
@@ -144,7 +138,7 @@ class Index extends Component
             ]);
         }
     }
-    
+
     // Méthode pour supprimer un produit
     public function deleteProduct($id)
     {
@@ -154,20 +148,20 @@ class Index extends Component
                 $this->error('Vous n\'avez pas les droits pour supprimer un produit.');
                 return;
             }
-            
+
             $product = Product::findOrFail($id);
-            
+
             // Vérifier si le produit est utilisé dans des inventaires
             if ($product->tenantInventories()->count() > 0) {
                 $this->error('Ce produit est utilisé dans des inventaires et ne peut pas être supprimé.');
                 return;
             }
-            
+
             // Supprimer le produit
             $product->delete();
-            
+
             $this->success('Produit supprimé avec succès!');
-            
+
         } catch (\Exception $e) {
             Log::error('Erreur lors de la suppression du produit: ' . $e->getMessage());
             $this->error('Erreur lors de la suppression du produit: ' . $e->getMessage());

@@ -7,11 +7,13 @@ use App\Models\Category;
 use App\Models\Aisle;
 use App\Enums\ProductType;
 use App\Enums\PersonType;
+use App\Http\Livewire\Traits\WithTenantContext;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Create extends Component
 {
+    use WithTenantContext;
     public $dci;
     public $dosage;
     public $forme_galenique;
@@ -30,17 +32,33 @@ class Create extends Component
         'dosage' => 'nullable|string|max:255',
         'forme_galenique' => 'nullable|string|max:255',
         'color_code' => 'nullable|string|max:20',
-        'type' => 'nullable|string|in:medicament,dispositif',
-        'personne' => 'nullable|string|in:adulte,enfant',
         'category_id' => 'nullable|exists:categories,id',
         'aisle_id' => 'nullable|exists:aisles,id',
         'active' => 'boolean',
     ];
 
+    public function boot()
+    {
+        // Add dynamic validation rules that can't be in property initialization
+        $this->rules['type'] = 'nullable|string|in:' . implode(',', array_column(ProductType::cases(), 'value'));
+        $this->rules['personne'] = 'nullable|string|in:' . implode(',', array_column(PersonType::cases(), 'value'));
+    }
+
     public function mount()
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.create'), 403);
+
+
+        // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
+        $tenant = app('tenant');
+
+        if (!$tenant) {
+            return redirect()->route('identification');
+        }
+
+        // Utiliser la méthode du trait pour stocker le tenant
+        $this->setTenant($tenant);
 
         // Charger les catégories et les emplacements
         $this->loadCategories();
@@ -58,9 +76,8 @@ class Create extends Component
 
     public function loadAisles()
     {
-        // Traitement global des données : récupérer tous les emplacements sans restriction par tenant
-        // Pour l'interface utilisateur, on affichera quand même les emplacements globaux et ceux du tenant courant
-        $this->aisles = Aisle::all()->toArray();
+        //recuperer les emplacements en priorité specifique sinon global
+        $this->aisles = Aisle::availableFor($this->getCurrentTenant()->id)->get()->toArray();
     }
 
     public function create()
@@ -73,8 +90,8 @@ class Create extends Component
                 'dosage' => $this->dosage,
                 'forme_galenique' => $this->forme_galenique,
                 'color_code' => $this->color_code,
-                'type' => $this->type,
-                'personne' => $this->personne,
+                'type' => ProductType::from($this->type),
+                'personne' => PersonType::from($this->personne),
                 'category_id' => $this->category_id,
                 'aisle_id' => $this->aisle_id,
                 'active' => $this->active
@@ -85,7 +102,7 @@ class Create extends Component
                 'message' => 'Produit créé avec succès!'
             ]);
 
-            return redirect()->route('tenant.catalog.index', ['tenant' => request()->route('tenant')]);
+            return redirect()->route('tenant.catalog.index', ['tenant' => $this->getCurrentTenant()]);
         } catch (\Exception $e) {
             $this->dispatch('notify', [
                 'type' => 'error',

@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Role;
 use App\Http\Livewire\Traits\WithToast;
+use App\Http\Livewire\Traits\WithTenantContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class Index extends Component
 {
-    use WithPagination, WithToast;
+    use WithPagination, WithToast, WithTenantContext;
 
     protected $paginationTheme = 'tailwind';
 
@@ -22,11 +23,6 @@ class Index extends Component
     public $roleIdToDelete = null;
     public $roleName = '';
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public $tenantParam;
-    public $tenant_id;  // Propriété publique pour stocker l'ID du tenant
 
     // Définition du layout à utiliser
     protected $layout = 'components.layouts.app';
@@ -36,38 +32,29 @@ class Index extends Component
         $this->reset('search');
     }
 
-    public function mount($tenant = null)
+    public function mount()
     {
-        // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
-
-        // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
         $tenant = app('tenant');
 
         if (!$tenant) {
             return redirect()->route('identification');
         }
+        $this->setTenant($tenant);
 
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
-
-        // Vérification des messages flash pour les afficher en toast
         if (session()->has('success')) {
             $this->success(session('success'), 6000);
-            session()->forget('success'); // Reset pour éviter des affichages multiples
+            session()->forget('success');
         }
 
         if (session()->has('error')) {
             $this->error(session('error'), 6000);
-            session()->forget('error'); // Reset pour éviter des affichages multiples
+            session()->forget('error');
         }
 
-        // Vérifier s'il y a un message toast dans la session et l'afficher
         if (session()->has('toast_message')) {
             $message = session('toast_message');
-            $type = session('toast_type', 'success'); // Par défaut, type success
+            $type = session('toast_type', 'success');
 
-            // Appeler la méthode appropriée du trait WithToast en fonction du type
             if ($type === 'success') {
                 $this->success($message);
             } elseif ($type === 'error') {
@@ -78,7 +65,6 @@ class Index extends Component
                 $this->warning($message);
             }
 
-            // Supprimer les messages de la session pour éviter qu'ils ne s'affichent à nouveau
             session()->forget(['toast_message', 'toast_type']);
         }
     }
@@ -90,23 +76,17 @@ class Index extends Component
 
     public function navigateToCreateRole()
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.roles.create', ['tenant' => $tenant->domain], navigate: true);
+        $this->redirectRoute('tenant.settings.roles.create', navigate: true);
     }
 
     public function navigateToEditRole($roleId)
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.roles.edit', ['tenant' => $tenant->domain, 'id' => $roleId], navigate: true);
+        $this->redirectRoute('tenant.settings.roles.edit', ['id' => $roleId], navigate: true);
     }
 
     public function navigateToViewPermissions($roleId)
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.roles.permissions', ['tenant' => $tenant->domain, 'id' => $roleId], navigate: true);
+        $this->redirectRoute('tenant.settings.roles.permissions', ['tenant' => $this->tenant, 'id' => $roleId], navigate: true);
     }
 
     public function confirmDelete($roleId)
@@ -176,8 +156,8 @@ class Index extends Component
                         DB::commit();
                         $this->success('Rôle supprimé avec succès.');
 
-                        // Récupérer le tenant pour la redirection
-                        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
+                        // Utiliser la méthode du trait pour récupérer le tenant
+                        $tenant = $this->getCurrentTenant();
                         return $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $tenant->domain], navigate: true);
                     } catch (\Exception $e) {
                         DB::rollBack();
@@ -198,11 +178,11 @@ class Index extends Component
     public function render()
     {
         try {
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
+            // Utiliser la méthode du trait pour récupérer le tenant
+            $tenant = $this->getCurrentTenant();
 
             $roles = Role::query()
-                ->where('tenant_id', $this->tenant_id) // Utiliser la propriété tenant_id stockée
+                ->where('tenant_id', $tenant->id)
                 ->when($this->search, function ($query) {
                     return $query->where('name', 'like', '%' . $this->search . '%');
                 })

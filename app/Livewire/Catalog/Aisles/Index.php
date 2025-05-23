@@ -5,9 +5,12 @@ namespace App\Livewire\Catalog\Aisles;
 use App\Models\Aisle;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class Index extends Component
 {
+    use WithTenantContext;
+
     public $search = '';
     public $showGlobal = true;
     public $showTenant = true;
@@ -16,6 +19,8 @@ class Index extends Component
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.view'), 403);
+        // Set le tenant
+        $this->setTenant(app('tenant'));
     }
 
     public function deleteAisle($id)

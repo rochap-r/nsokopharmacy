@@ -3,7 +3,7 @@
         <div class="flex flex-col md:flex-row md:justify-between md:items-center">
             <div>
                 <div class="flex items-center mb-4">
-                    <a href="{{ tenant_route('tenant.catalog.index', ['tenant' => request()->route('tenant')]) }}" class="inline-flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-500 transition-colors duration-200" wire:navigate>
+                    <a href="{{ tenant_route('tenant.catalog.index') }}" class="inline-flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-500 transition-colors duration-200" wire:navigate>
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
@@ -90,7 +90,7 @@
                             </div>
 
                             <div class="flex justify-end space-x-3">
-                                <button type="button" wire:click="cancel" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200">Annuler</button>
+                                <a href="{{ tenant_route('tenant.catalog.index') }}" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200" wire:navigate>Retour au catalogue</a>
                                 <button type="submit" class="px-4 py-2.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 font-medium transition-colors duration-200" wire:loading.attr="disabled" wire:target="import">
                                     <span wire:loading.remove wire:target="import" class="flex items-center">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -162,7 +162,7 @@
                         @endif
 
                         <div class="flex justify-end space-x-3">
-                            <a href="{{ tenant_route('tenant.catalog.index', ['tenant' => request()->route('tenant')]) }}" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200" wire:navigate>Retour au catalogue</a>
+                            <a href="{{ tenant_route('tenant.catalog.index') }}" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200" wire:navigate>Retour au catalogue</a>
                             <button type="button" wire:click="cancel" class="px-4 py-2.5 bg-gray-700 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 font-medium transition-colors duration-200">Fermer</button>
                         </div>
                     @endif
@@ -225,8 +225,8 @@
                         </div>
 
                         <div class="flex justify-end space-x-3">
-                            <a href="{{ tenant_route('tenant.catalog.index', ['tenant' => request()->route('tenant')]) }}" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200" wire:navigate>Retour au catalogue</a>
-                            <button type="button" wire:click="cancel" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200">Annuler</button>
+                            <a href="{{ tenant_route('tenant.catalog.index') }}" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200" wire:navigate>Retour au catalogue</a>
+                            <a href="{{ tenant_route('tenant.catalog.index') }}" class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 font-medium transition-colors duration-200" wire:navigate>Annuler</a>
                             <button type="submit" class="px-4 py-2.5 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 font-medium transition-colors duration-200" wire:loading.attr="disabled" wire:target="export">
                                 <span wire:loading.remove wire:target="export" class="flex items-center">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

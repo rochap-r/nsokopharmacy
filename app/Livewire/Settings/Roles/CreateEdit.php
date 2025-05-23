@@ -6,25 +6,20 @@ use Livewire\Component;
 use App\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Http\Livewire\Traits\WithToast;
+use App\Http\Livewire\Traits\WithTenantContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CreateEdit extends Component
 {
-    use WithToast;
+    use WithToast, WithTenantContext;
 
     public $roleId = null;
     public $roleName = '';
     public $selectedPermissions = [];
     public $editMode = false;
     public $showConfirmDeselectModal = false;
-
-    /**
-     * Handle an incoming authentication request.
-     */
-    public $tenantParam;
-    public $tenant_id;  // Propriété publique pour stocker l'ID du tenant
 
     // Définition du layout à utiliser
     protected $layout = 'components.layouts.app';
@@ -49,11 +44,8 @@ class CreateEdit extends Component
         'roleName.unique' => 'Ce nom de rôle existe déjà.'
     ];
 
-    public function mount($tenant = null, $id = null)
+    public function mount($id = null)
     {
-        // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
-
         // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
         $tenant = app('tenant');
 
@@ -61,14 +53,14 @@ class CreateEdit extends Component
             return redirect()->route('identification');
         }
 
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
+        // Utiliser la méthode du trait pour stocker le tenant
+        $this->setTenant($tenant);
 
         if ($id) {
             try {
                 // Vérifier que le rôle appartient bien au tenant courant
                 $role = Role::where('id', $id)
-                    ->where('tenant_id', $this->tenant_id)
+                    ->where('tenant_id', $this->getCurrentTenant()->id)
                     ->firstOrFail();
 
                 $this->roleId = $id;
@@ -79,9 +71,8 @@ class CreateEdit extends Component
                 Log::error('Erreur dans CreateEdit::mount pour le rôle ID ' . $id . ': ' . $e->getMessage());
                 $this->error('Erreur lors du chargement du rôle: ' . $e->getMessage());
 
-                // Récupérer le tenant pour la redirection
-                $tenantObj = \App\Models\Tenant::findOrFail($this->tenant_id);
-                return $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $tenantObj->domain], navigate: true);
+
+                return $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $this->getCurrentTenant()], navigate: true);
             }
         }
     }
@@ -115,14 +106,14 @@ class CreateEdit extends Component
                 $message='Rôle mis à jour avec succès!';
             } else {
                 // Vérifier si le rôle existe déjà pour éviter l'erreur de duplicat
-                if (Role::where('name', $this->roleName.'-'.$this->tenant_id)->exists()) {
+                if (Role::where('name', $this->roleName.'-'.$this->getCurrentTenant()->id)->exists()) {
                     $this->error('Ce nom de rôle existe déjà.');
                     DB::rollBack();
                     return;
                 }
 
                 // Création d'un nouveau rôle
-                $role = Role::create(['name' => $this->roleName.'-'.$this->tenant_id, 'tenant_id' => $this->tenant_id]);
+                $role = Role::create(['name' => $this->roleName.'-'.$this->getCurrentTenant()->id, 'tenant_id' => $this->getCurrentTenant()->id]);
 
                 // Récupérer les objets Permission à partir des IDs
                 if (!empty($this->selectedPermissions)) {
@@ -140,9 +131,7 @@ class CreateEdit extends Component
             session()->flash('success', $message);
 
             // Rediriger vers la liste des rôles
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-            $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $tenant->domain], navigate:false);
+            $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $this->getCurrentTenant()], navigate:false);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur dans CreateEdit::saveRole pour "' . $this->roleName . '": ' . $e->getMessage());
@@ -153,9 +142,8 @@ class CreateEdit extends Component
     public function cancelEdit()
     {
         $this->resetValidation();
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $tenant->domain], navigate: true);
+
+        $this->redirectRoute('tenant.settings.roles.index', ['tenant' => $this->getCurrentTenant()], navigate: true);
     }
 
     public function selectAllPermissions()
@@ -188,9 +176,6 @@ class CreateEdit extends Component
     public function render()
     {
         try {
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-
             $permissions = Permission::all();
             $permissionsByGroup = $permissions->groupBy(function ($permission) {
                 // Grouper les permissions par leur préfixe (avant le premier point)
@@ -203,7 +188,7 @@ class CreateEdit extends Component
             return view('livewire.settings.roles.create-edit', [
                 'permissions' => $permissions,
                 'permissionsByGroup' => $permissionsByGroup,
-                'tenant' => $tenant,
+                'tenant' => $this->getCurrentTenant(),
                 'title' => $title
             ]);
         } catch (\Exception $e) {

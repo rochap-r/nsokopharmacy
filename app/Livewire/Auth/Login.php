@@ -3,19 +3,21 @@
 namespace App\Livewire\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Events\Lockout;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Session;
+use Livewire\Component;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
-use Livewire\Component;
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 #[Layout('components.layouts.auth.auth')]
 class Login extends Component
 {
+    use WithTenantContext;
     #[Validate('required|string|email')]
     public string $email = '';
 
@@ -24,26 +26,16 @@ class Login extends Component
 
     public bool $remember = false;
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public $tenantParam;
-    public $tenant_id;  // Propriété publique pour stocker l'ID du tenant
 
-    public function mount($tenant = null)
+    public function mount()
     {
         // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
+        $this->setTenant(app('tenant'));
 
-        // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
-        $tenant = app('tenant');
-
-        if (!$tenant) {
+        if (!$this->getCurrentTenant()) {
             return redirect()->route('identification');
         }
 
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
     }
 
     public function login(): void
@@ -54,7 +46,7 @@ class Login extends Component
 
 
         // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
+        $tenant = \App\Models\Tenant::findOrFail($this->getCurrentTenant()->id);
         //dd($tenant);
         // Tentative d'authentification
         if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {

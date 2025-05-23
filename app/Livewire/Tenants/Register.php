@@ -124,16 +124,11 @@ class Register extends Component
         session(['last_tenant_creation_attempt' => $currentTime]);
 
         $validated['id'] = Str::lower(Str::random(6));
-        //dd($validated);
         $tenant = Tenant::create($validated);
-        $tenant_id = $tenant->id;
 
-        $tenant->domains()->create(['domain' => $tenant_id.'.'. parse_url(config('app.url'), PHP_URL_HOST)]);
+        app('tenant')->set($tenant);
 
-        $tenantDomain = $tenant->domains()->first()->domain;
-        $dashboardUrl = tenant_route($tenantDomain, 'register');
-
-        $this->redirect($dashboardUrl, navigate: false);
+        $this->redirectRoute('tenant.register', ['tenant' => $tenant], navigate: true);
     }
 
     public function render()

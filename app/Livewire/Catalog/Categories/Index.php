@@ -2,43 +2,108 @@
 
 namespace App\Livewire\Catalog\Categories;
 
-use App\Models\Category;
 use Livewire\Component;
+use App\Models\Category;
+use Illuminate\Support\Str;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Livewire\Traits\WithToast;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class Index extends Component
 {
-    use WithPagination, WithToast;
+    use WithPagination, WithToast, WithTenantContext;
+
+    /**
+     * Convert a hex color code to the closest Tailwind color class
+     * This is used to dynamically apply Tailwind color classes based on the category color
+     */
+    public function colorToTailwind($hexColor)
+    {
+        // Remove # if present
+        $hex = ltrim($hexColor, '#');
+
+        // Convert to RGB
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+
+        // Calculate color brightness (simple formula)
+        $brightness = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+
+        // Map to Tailwind color classes based on dominant color and brightness
+        if (max($r, $g, $b) === $r) {
+            // Red dominant
+            if ($g > 150 && $b < 100) {
+                return 'amber'; // Red-yellow mix
+            } elseif ($b > 150) {
+                return 'rose'; // Red-blue mix (pink/rose)
+            } else {
+                return 'red';
+            }
+        } elseif (max($r, $g, $b) === $g) {
+            // Green dominant
+            if ($r > 150 && $b < 100) {
+                return 'lime'; // Green-red mix (lime)
+            } elseif ($b > 150) {
+                return 'emerald'; // Green-blue mix (teal/emerald)
+            } else {
+                return 'green';
+            }
+        } elseif (max($r, $g, $b) === $b) {
+            // Blue dominant
+            if ($r > 150 && $g < 100) {
+                return 'violet'; // Blue-red mix (purple/violet)
+            } elseif ($g > 150) {
+                return 'sky'; // Blue-green mix (teal/cyan/sky)
+            } else {
+                return 'blue';
+            }
+        }
+
+        // Handle specific color combinations
+        if ($r > 180 && $g > 180 && $b < 100) {
+            return 'yellow';
+        } elseif ($r > 180 && $g > 130 && $g < 180 && $b < 100) {
+            return 'orange';
+        } elseif ($r > 130 && $g < 100 && $b > 130) {
+            return 'purple';
+        } elseif ($r < 100 && $g > 130 && $b > 130) {
+            return 'cyan';
+        }
+
+        // Handle grayscale
+        if (abs($r - $g) < 30 && abs($g - $b) < 30 && abs($r - $b) < 30) {
+            if ($brightness > 200) {
+                return 'gray';
+            } elseif ($brightness > 100) {
+                return 'slate';
+            } else {
+                return 'zinc';
+            }
+        }
+
+        // Default fallback
+        return 'indigo';
+    }
 
     protected $paginationTheme = 'tailwind';
 
     // Propriétés pour la recherche
     public $search = '';
 
-    // Pour gérer le contexte tenant
-    public $tenantParam;
-    public $tenant_id;
-
-    public function mount($tenant = null)
+    public function mount()
     {
         // Vérification des permissions
         abort_unless(Auth::user()->can('catalog.view'), 403);
 
-        // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
+        // Utiliser la méthode du trait pour stocker le tenant
+        $this->setTenant($this->getCurrentTenant());
 
-        // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
-        $tenant = app('tenant');
-
-        if (!$tenant) {
+        if (!$this->getCurrentTenant()) {
             return redirect()->route('identification');
         }
-
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
 
         // Vérification des messages flash pour les afficher en toast
         if (session()->has('success')) {
@@ -95,11 +160,16 @@ class Index extends Component
         }
     }
 
+    // Nombre de catégories par page
+    public $perPage = 9;
+
+    // Les méthodes de gestion du tenant sont maintenant définies dans le trait WithTenantContext
+
     public function render()
     {
         try {
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
+            // Récupérer le tenant en utilisant la méthode du trait
+            $tenant = $this->getCurrentTenant();
 
             // Traitement global des données sans filtrer par tenant
             $query = Category::query();
@@ -108,21 +178,22 @@ class Index extends Component
                 $query->where('name', 'like', "%{$this->search}%");
             }
 
-            // Récupérer toutes les catégories principales (sans parent)
-            if (empty($this->search)) {
-                $categories = $query->whereNull('parent_id')
-                    ->with(['children.children', 'children.products', 'children.children.products', 'products'])
-                    ->get();
-            } else {
-                // Si une recherche est active, on récupère toutes les catégories qui correspondent
-                $categories = $query->with(['parent.parent', 'children.children', 'products'])
-                    ->get();
-            }
+            // Récupérer toutes les catégories dans une liste plate avec leurs relations
+            $query->with(['parent', 'parent.parent', 'products']);
+
+            // Trier les catégories par nom
+            $query->orderBy('name', 'asc');
+
+            // Paginer les résultats
+            $categories = $query->paginate($this->perPage);
 
             return view('livewire.catalog.categories.index', [
                 'categories' => $categories,
                 'title' => 'Gestion des Catégories',
-                'tenant' => $tenant
+                'tenant' => $tenant,
+                'colorToTailwind' => function($hex) {
+                    return $this->colorToTailwind($hex);
+                }
             ]);
         } catch (\Exception $e) {
             Log::error('Erreur dans Categories\Index::render: ' . $e->getMessage());
@@ -131,7 +202,10 @@ class Index extends Component
             $this->error('Erreur lors du chargement des catégories: ' . $e->getMessage());
             return view('livewire.catalog.categories.index', [
                 'categories' => collect(),
-                'title' => 'Gestion des Catégories'
+                'title' => 'Gestion des Catégories',
+                'colorToTailwind' => function($hex) {
+                    return $this->colorToTailwind($hex);
+                }
             ]);
         }
     }

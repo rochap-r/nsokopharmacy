@@ -2,17 +2,19 @@
 
 namespace App\Livewire\Settings\Users;
 
+use App\Models\Role;
 use App\Models\User;
 use Livewire\Component;
-use Illuminate\Support\Facades\Hash;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Role;
+use Illuminate\Support\Facades\Hash;
 use App\Http\Livewire\Traits\WithToast;
+use App\Http\Livewire\Traits\WithTenantContext;
 
 class CreateEdit extends Component
 {
-    use WithToast;
+    use WithToast, WithTenantContext;
 
     public $userId = null;
     public $name = '';
@@ -20,11 +22,6 @@ class CreateEdit extends Component
     public $password = '12345678';
     public $selectedRole = null;
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public $tenantParam;
-    public $tenant_id;  // Propriété publique pour stocker l'ID du tenant
 
     protected $layout = 'components.layouts.app';
 
@@ -66,11 +63,8 @@ class CreateEdit extends Component
         ];
     }
 
-    public function mount($tenant = null, $id = null)
+    public function mount($id = null)
     {
-        // Récupérer le paramètre tenant depuis la route
-        $this->tenantParam = $tenant;
-
         // Le tenant est disponible via le middleware à ce stade (requête GET initiale)
         $tenant = app('tenant');
 
@@ -78,14 +72,13 @@ class CreateEdit extends Component
             return redirect()->route('identification');
         }
 
-        // Stocker l'ID du tenant dans une propriété publique pour les actions Livewire
-        $this->tenant_id = $tenant->id;
+        $this->setTenant($tenant);
 
         if ($id) {
             try {
                 // Vérifier que l'utilisateur appartient bien au tenant courant
                 $user = User::where('id', $id)
-                    ->where('tenant_id', $this->tenant_id)
+                    ->where('tenant_id', $tenant->id)
                     ->firstOrFail();
 
                 // Vérifier que l'utilisateur ne tente pas de se modifier lui-même pour changer son rôle
@@ -106,18 +99,22 @@ class CreateEdit extends Component
                 Log::error('Erreur dans CreateEdit::mount: ' . $e->getMessage());
                 $this->error('Utilisateur non trouvé.');
 
-                // Récupérer le tenant pour la redirection
-                $tenantObj = \App\Models\Tenant::findOrFail($this->tenant_id);
-                $this->redirectRoute('tenant.settings.users.index', ['tenant' => $tenantObj->domain], navigate: true);
+                $this->redirectRoute('tenant.settings.users.index', ['tenant' => $tenant], navigate: true);
             }
         }
     }
 
     public function saveUser()
     {
+        //verify the permission with can
+        if (!Auth::user()->can('users.create') || !Auth::user()->can('users.edit')) {
+            $this->error('Vous n\'avez pas la permission de créer ou modifier un utilisateur.');
+            return null;
+        }
+
         try {
             // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
+            $tenant = $this->getCurrentTenant();
 
             // Valider les données
             $this->validate();
@@ -210,16 +207,12 @@ class CreateEdit extends Component
 
     public function cancelEdit()
     {
-        // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-        $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
-        $this->redirectRoute('tenant.settings.users.index', ['tenant' => $tenant->domain], navigate: true);
+        $this->redirectRoute('tenant.settings.users.index', navigate: true);
     }
 
     public function render()
     {
         try {
-            // Récupérer le tenant à partir de l'ID stocké dans la propriété publique
-            $tenant = \App\Models\Tenant::findOrFail($this->tenant_id);
 
             // Récupérer tous les rôles sauf celui de l'utilisateur connecté
             $currentUser = Auth::user();
@@ -241,7 +234,6 @@ class CreateEdit extends Component
 
             return view('livewire.settings.users.create-edit', [
                 'roles' => $roles,
-                'tenant' => $tenant,
                 'title' => $this->userId ? __('Modifier l\'utilisateur') : __('Créer un utilisateur')
             ]);
         } catch (\Exception $e) {

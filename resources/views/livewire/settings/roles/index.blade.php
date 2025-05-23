@@ -13,7 +13,7 @@
             </div>
             <div>
                 <a
-                    href="{{ tenant_route('tenant.settings.roles.create', ['tenant' => $tenantParam]) }}"
+                    href="{{ tenant_route('tenant.settings.roles.create') }}"
                     wire:navigate
                     class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border border-transparent rounded-lg font-medium text-sm text-white tracking-wide hover:shadow-md active:from-blue-800 active:to-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-150 ease-in-out"
                 >
@@ -95,7 +95,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end space-x-3">
                                     <a
-                                        href="{{ tenant_route('tenant.settings.roles.permissions', ['tenant' => $tenantParam, 'id' => $role->id]) }}"
+                                        href="{{ tenant_route('tenant.settings.roles.permissions', ['id' => $role->id]) }}"
                                         wire:navigate
                                         class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 focus:outline-none transition duration-150 ease-in-out bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 p-2 rounded-lg"
                                         title="Voir les permissions"
@@ -106,7 +106,7 @@
                                         </svg>
                                     </a>
                                     <a
-                                        href="{{ tenant_route('tenant.settings.roles.edit', ['tenant' => $tenantParam, 'id' => $role->id]) }}"
+                                        href="{{ tenant_route('tenant.settings.roles.edit', ['id' => $role->id]) }}"
                                         wire:navigate
                                         class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 focus:outline-none transition duration-150 ease-in-out bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 p-2 rounded-lg"
                                         title="Modifier"
@@ -139,7 +139,7 @@
                                     <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Aucun rôle trouvé</h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Commencez par créer un nouveau rôle pour gérer les accès.</p>
                                     <a
-                                        href="{{ tenant_route('tenant.settings.roles.create', ['tenant' => $tenantParam]) }}"
+                                        href="{{ tenant_route('tenant.settings.roles.create') }}"
                                         wire:navigate
                                         class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border border-transparent rounded-lg font-medium text-sm text-white tracking-wide hover:shadow-md active:from-blue-800 active:to-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-150 ease-in-out"
                                     >
